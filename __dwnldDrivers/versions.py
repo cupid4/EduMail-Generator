@@ -170,7 +170,8 @@ def get_chrome_driver_dwnld_url(version):
     """
     platform, architecture = get_platform_architecture_chrome()
 
-    return 'https://chromedriver.storage.googleapis.com/' + str(version) + '/chromedriver_' + platform + str(architecture) + '.zip'
+    return "https://storage.googleapis.com/chrome-for-testing-public/137.0.7151.55/mac-x64/chromedriver-mac-x64.zip"
+    # return 'https://chromedriver.storage.googleapis.com/' + str(version) + '/chromedriver_' + platform + str(architecture) + '.zip'
 
 def dwnld_zip_file(url, save_path, chunk_size=128):
 

@@ -9,6 +9,7 @@ from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
@@ -67,12 +68,25 @@ def start_bot(start_url, email, college, collegeID):
     try:
         # For Chrome
         if typex == 'chrome':
-            driver = webdriver.Chrome(executable_path=r'./webdriver/chromedriver')
+            chrome_options = Options()
+            # Selenium 자동화 탐지를 우회하기 위한 기존 옵션들 (이전 답변에서 추가된 내용)
+            chrome_options.add_argument("--disable-blink-features=AutomationControlled")
+            chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+            chrome_options.add_experimental_option('useAutomationExtension', False)
+
+            # 요청하신 헤더 전송을 막기 위한 프록시 관련 설정 추가
+            chrome_options.add_argument('--no-proxy-server')
+            chrome_options.add_argument('--proxy-bypass-list=*')
+            chrome_options.add_argument('--proxy-server="direct://"')
+
+            chrome_driver_path = r'./webdriver/chromedriver'
+            service = ChromeService(executable_path=chrome_driver_path)
+            driver = webdriver.Chrome(service=service, options=chrome_options)
         # For Firefox
         elif typex == 'firefox':
             # cap = DesiredCapabilities().FIREFOX
             # cap['marionette'] = True
-            driver = webdriver.Firefox(executable_path=r'./webdriver/geckodriver')
+            driver = webdriver.Firefox(service=webdriver.firefox.service.Service(executable_path=r'./webdriver/geckodriver'))
         elif typex == '':
             print(fr + 'Error - Run setup.py first')
             exit()
@@ -84,9 +98,9 @@ def start_bot(start_url, email, college, collegeID):
     driver.maximize_window()
     driver.get(start_url)
 
-    time.sleep(1)
-
-    driver.find_element_by_xpath('//*[@id="portletContent_u16l1n18"]/div/div[2]/div/a[2]').click()
+    WebDriverWait(driver, 60).until(
+        EC.element_to_be_clickable((By.XPATH, '//*[@id="portletContent_u16l1n18"]/div/div[2]/div/a[2]'))
+    ).click()
 
     time.sleep(1)
 
@@ -114,9 +128,9 @@ def start_bot(start_url, email, college, collegeID):
 
     time.sleep(0.7)
 
-    driver.find_element_by_xpath('//*[@id="hasOtherNameNo"]').click()
+    driver.find_element(By.XPATH, '//*[@id="hasOtherNameNo"]').click()
 
-    driver.find_element_by_xpath('//*[@id="hasPreferredNameNo"]').click()
+    driver.find_element(By.XPATH, '//*[@id="hasPreferredNameNo"]').click()
 
     time.sleep(0.7)
 
@@ -166,7 +180,7 @@ def start_bot(start_url, email, college, collegeID):
 
     time.sleep(4)
 
-    element = driver.find_element_by_id('accountFormSubmit')
+    element = driver.find_element(By.ID, 'accountFormSubmit')
     desired_y = (element.size['height'] / 2) + element.location['y']
     window_h = driver.execute_script('return window.innerHeight')
     window_y = driver.execute_script('return window.pageYOffset')
@@ -236,12 +250,12 @@ def start_bot(start_url, email, college, collegeID):
 
     try:
         time.sleep(1)
-        driver.find_element_by_xpath('//*[@id="messageFooterLabel"]').click()
+        driver.find_element(By.XPATH, '//*[@id="messageFooterLabel"]').click()
 
         opError = True
 
         while opError != False:
-            chkInputPhone = driver.find_element_by_id('inputSmsPhone')
+            chkInputPhone = driver.find_element(By.ID, 'inputSmsPhone')
             chkError = chkInputPhone.get_attribute('class')
             if chkError == 'portlet-form-input-field error':
                 print('\n' + fc + sd + '[' + fm + sb + '*' + fc + sd + '] ' + fr + 'Invalid Number, Retrying....')
@@ -377,7 +391,7 @@ def start_bot(start_url, email, college, collegeID):
 
     for d in range(1, 200):
 
-        xx = driver.find_element_by_name('captchaResponse')
+        xx = driver.find_element(By.NAME, 'captchaResponse')
 
         tdt = xx.get_attribute('value')
 
@@ -392,7 +406,7 @@ def start_bot(start_url, email, college, collegeID):
     if solved == 1:
         time.sleep(2)
 
-        element = driver.find_element_by_id('accountFormSubmit')
+        element = driver.find_element(By.ID, 'accountFormSubmit')
         desired_y = (element.size['height'] / 2) + element.location['y']
         window_h = driver.execute_script('return window.innerHeight')
         window_y = driver.execute_script('return window.pageYOffset')
@@ -428,7 +442,7 @@ def start_bot(start_url, email, college, collegeID):
             EC.presence_of_element_located((By.NAME, 'application.termId'))
         )
 
-        dropdown_menu = Select(driver.find_element_by_name('application.termId'))
+        dropdown_menu = Select(driver.find_element(By.NAME, 'application.termId'))
         dropdown_menu.select_by_index(1)
 
         time.sleep(0.7)
@@ -440,7 +454,7 @@ def start_bot(start_url, email, college, collegeID):
 
         time.sleep(2)
 
-        dropdown_menu = Select(driver.find_element_by_id('inputMajorId'))
+        dropdown_menu = Select(driver.find_element(By.ID, 'inputMajorId'))
         dropdown_menu.select_by_index(random.randint(1, 7))
 
         time.sleep(2.5)
@@ -463,7 +477,7 @@ def start_bot(start_url, email, college, collegeID):
 
         # Page 2
 
-        dropdown_menu = Select(driver.find_element_by_name('appEducation.enrollmentStatus'))
+        dropdown_menu = Select(driver.find_element(By.NAME, 'appEducation.enrollmentStatus'))
         dropdown_menu.select_by_index(1)
 
         time.sleep(0.7)
@@ -525,7 +539,7 @@ def start_bot(start_url, email, college, collegeID):
                 (By.CSS_SELECTOR, '#hs-input-sf-state option[value="' + stateAddress + '"]'))
         ).click()
 
-        search = driver.find_element_by_id('hs-school-name')
+        search = driver.find_element(By.ID, 'hs-school-name')
         search.clear()
         search.send_keys('high')
         auto_complete = WebDriverWait(driver, 60).until(
@@ -533,12 +547,12 @@ def start_bot(start_url, email, college, collegeID):
         )
         time.sleep(2)
 
-        parentElement = driver.find_element_by_class_name('autocomplete-menu')
-        it = parentElement.find_elements_by_tag_name("li")
+        parentElement = driver.find_element(By.CLASS_NAME, 'autocomplete-menu')
+        it = parentElement.find_elements(By.TAG_NAME, "li")
 
         if len(it) < 5:
             print(fc + sd + '[' + fm + sb + '*' + fc + sd + '] ' + fr + 'Changing State....')
-            Select(driver.find_element_by_id('hs-input-sf-state')).select_by_value('CA')
+            Select(driver.find_element(By.ID, 'hs-input-sf-state')).select_by_value('CA')
             
             search.clear()
             search.send_keys('high', Keys.ENTER)
@@ -547,8 +561,8 @@ def start_bot(start_url, email, college, collegeID):
             )
             time.sleep(2)
 
-            parentElement = driver.find_element_by_class_name('autocomplete-menu')
-            it = parentElement.find_elements_by_tag_name("li")
+            parentElement = driver.find_element(By.CLASS_NAME, 'autocomplete-menu')
+            it = parentElement.find_elements(By.TAG_NAME, "li")
             if len(it) > 5:
                 print(fc + sd + '[' + fm + sb + '*' + fc + sd + '] ' + fy + 'State Changed, Resuming')
 
@@ -685,7 +699,7 @@ def start_bot(start_url, email, college, collegeID):
 
         time.sleep(1)
 
-        parentElement = driver.find_elements_by_class_name('ccc-form-layout')[5]
+        parentElement = driver.find_elements(By.CLASS_NAME, 'ccc-form-layout')[5]
         element = parentElement
         desired_y = (element.size['height'] / 2) + element.location['y']
         window_h = driver.execute_script('return window.innerHeight')
@@ -695,7 +709,7 @@ def start_bot(start_url, email, college, collegeID):
 
         driver.execute_script("window.scrollBy(0, arguments[0]);", scroll_y_by)
 
-        allElements = parentElement.find_elements_by_tag_name('li')
+        allElements = parentElement.find_elements(By.TAG_NAME, 'li')
 
 
         rndList = [2, 1, 2, 2]
@@ -707,7 +721,7 @@ def start_bot(start_url, email, college, collegeID):
             for elementxx in allElements:
                 myRandom = random.choice(rndList)
                 time.sleep(0.4)
-                xx = elementxx.find_element_by_class_name('portlet-form-input-checkbox')
+                xx = elementxx.find_element(By.CLASS_NAME, 'portlet-form-input-checkbox')
                 if xx.get_attribute('id') == 'inputOnlineClasses' and inputChecked == False:
                     myRandom = 1
                     inputChecked = True
@@ -855,73 +869,73 @@ def start_bot(start_url, email, college, collegeID):
                 )
             except:
                 pass
-            Select(driver.find_element_by_id("_supp_MENU_1")).select_by_value('ENG')
+            Select(driver.find_element(By.ID, "_supp_MENU_1")).select_by_value('ENG')
             time.sleep(2)
-            Select(driver.find_element_by_id("_supp_MENU_5")).select_by_value('N')
-            Select(driver.find_element_by_id("_supp_MENU_6")).select_by_value('N')
-            Select(driver.find_element_by_id("_supp_MENU_4")).select_by_value('OPT2')
-            driver.find_element_by_id("_supp_CHECK_5").click()
+            Select(driver.find_element(By.ID, "_supp_MENU_5")).select_by_value('N')
+            Select(driver.find_element(By.ID, "_supp_MENU_6")).select_by_value('N')
+            Select(driver.find_element(By.ID, "_supp_MENU_4")).select_by_value('OPT2')
+            driver.find_element(By.ID, "_supp_CHECK_5").click()
             time.sleep(2)
-            driver.find_element_by_name("_eventId_continue").click()
+            driver.find_element(By.NAME, "_eventId_continue").click()
 
         elif collegeID == 4:
 
             time.sleep(2)
-            driver.find_element_by_id("YESNO_1_yes").click()
-            driver.find_element_by_id("YESNO_2_yes").click()
+            driver.find_element(By.ID, "YESNO_1_yes").click()
+            driver.find_element(By.ID, "YESNO_2_yes").click()
             time.sleep(2)
-            driver.find_element_by_id("_supp_TEXT_1").send_keys(studentPhone.replace('-', ''))
+            driver.find_element(By.ID, "_supp_TEXT_1").send_keys(studentPhone.replace('-', ''))
             time.sleep(2)
 
-            GPA = Select(driver.find_element_by_id('_supp_MENU_2'))
+            GPA = Select(driver.find_element(By.ID, '_supp_MENU_2'))
             GPA.select_by_value('4')
             time.sleep(2)
 
-            units = Select(driver.find_element_by_id('_supp_MENU_8'))
+            units = Select(driver.find_element(By.ID, '_supp_MENU_8'))
             units.select_by_value('4')
             time.sleep(2)
 
-            money = Select(driver.find_element_by_id('_supp_MENU_3'))
+            money = Select(driver.find_element(By.ID, '_supp_MENU_3'))
             money.select_by_value('30')
             time.sleep(2)
 
-            house = Select(driver.find_element_by_id('_supp_MENU_4'))
+            house = Select(driver.find_element(By.ID, '_supp_MENU_4'))
             house.select_by_value('1')
             time.sleep(2)
 
-            house = Select(driver.find_element_by_id('_supp_MENU_5'))
+            house = Select(driver.find_element(By.ID, '_supp_MENU_5'))
             house.select_by_value('B')
             time.sleep(2)
 
-            driver.find_element_by_id("YESNO_4_yes").click()
-            driver.find_element_by_id("YESNO_5_yes").click()
+            driver.find_element(By.ID, "YESNO_4_yes").click()
+            driver.find_element(By.ID, "YESNO_5_yes").click()
             time.sleep(2)
-            driver.find_element_by_id("YESNO_6_yes").click()
-            driver.find_element_by_id("YESNO_7_no").click()
+            driver.find_element(By.ID, "YESNO_6_yes").click()
+            driver.find_element(By.ID, "YESNO_7_no").click()
             time.sleep(2)
-            driver.find_element_by_id("YESNO_8_yes").click()
-            driver.find_element_by_id("YESNO_9_no").click()
-            driver.find_element_by_id("YESNO_10_no").click()
+            driver.find_element(By.ID, "YESNO_8_yes").click()
+            driver.find_element(By.ID, "YESNO_9_no").click()
+            driver.find_element(By.ID, "YESNO_10_no").click()
             time.sleep(1)
-            driver.find_element_by_id("YESNO_11_yes").click()
+            driver.find_element(By.ID, "YESNO_11_yes").click()
             time.sleep(1)
-            driver.find_element_by_id("YESNO_12_no").click()
+            driver.find_element(By.ID, "YESNO_12_no").click()
             time.sleep(2)
-            driver.find_element_by_id("YESNO_13_no").click()
-            driver.find_element_by_id("YESNO_14_yes").click()
+            driver.find_element(By.ID, "YESNO_13_no").click()
+            driver.find_element(By.ID, "YESNO_14_yes").click()
 
-            question = Select(driver.find_element_by_id('_supp_MENU_6'))
+            question = Select(driver.find_element(By.ID, '_supp_MENU_6'))
             question.select_by_value('What school did you attend for sixth grade?')
             time.sleep(2)
-            question = Select(driver.find_element_by_id('_supp_MENU_7'))
+            question = Select(driver.find_element(By.ID, '_supp_MENU_7'))
             question.select_by_value(
                 'What is the first name of your least favorite relative?')
             time.sleep(1)
-            driver.find_element_by_id("_supp_TEXT_3").send_keys("Nulled")
-            driver.find_element_by_id("_supp_TEXT_4").send_keys("Nulled")
+            driver.find_element(By.ID, "_supp_TEXT_3").send_keys("Nulled")
+            driver.find_element(By.ID, "_supp_TEXT_4").send_keys("Nulled")
             time.sleep(2)
 
-            driver.find_element_by_name("_eventId_continue").click()
+            driver.find_element(By.NAME, "_eventId_continue").click()
         
         print(fg + ' (Success)')
 
@@ -953,7 +967,7 @@ def start_bot(start_url, email, college, collegeID):
 
         time.sleep(30)
 
-        element = driver.find_element_by_xpath('//*[@id="submit-application-button"]')
+        element = driver.find_element(By.XPATH, '//*[@id="submit-application-button"]')
         desired_y = (element.size['height'] / 2) + element.location['y']
         window_h = driver.execute_script('return window.innerHeight')
         window_y = driver.execute_script('return window.pageYOffset')
@@ -969,7 +983,7 @@ def start_bot(start_url, email, college, collegeID):
 
         time.sleep(2)
 
-        confirmedText = driver.find_element_by_class_name('mypath-confirmation-text').text
+        confirmedText = driver.find_element(By.CLASS_NAME, 'mypath-confirmation-text').text
 
         print(fc + sd + '[' + fm + sb + '*' + fc + sd + '] ' + fg + confirmedText)
 
